@@ -9,7 +9,7 @@
     "check-types": "turbo run check-types",
     "db:generate": "cd packages/db && npx prisma generate && cd ../..",
     "start:web": "cd apps/web && bun run start",
-    "start:backend": "cd apps/backend && bun run index.ts",
+    "start:backend": "cd apps/backned && bun run index.ts",
     "start:ws": "cd apps/ws && bun run index.ts"
   },
   "devDependencies": {
