@@ -9,7 +9,7 @@ COPY ./package.json ./package.json
 COPY ./package-lock.json ./package-lock.json
 COPY ./turbo.json ./turbo.json
 
-COPY ./apps/backend ./apps/backend
+COPY ./apps/backned ./apps/backned
 
 RUN bun install
 RUN bun run db:generate
