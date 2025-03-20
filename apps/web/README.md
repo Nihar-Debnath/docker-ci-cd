@@ -1,36 +1,118 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/create-next-app).
+When you run `npm run build` in Next.js, your page is being **statically generated at build time**. However, you're using **server-side database fetching (`await client.user.findMany()`)**, which does not work with **Static Site Generation (SSG)** by default.
 
-## Getting Started
+---
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+### **🚨 Problem:**
+```tsx
+export default async function Home() {
+  const users = await client.user.findMany(); // ❌ Fetching at build time
+  return (
+    <div>
+      {users?.map(user => (
+        <div key={user.id}>
+          username: {user.username}
+          password: {user.password}
+        </div>
+      ))}
+    </div>
+  );
+}
 ```
+- `npm run build` generates **static files** at build time.
+- **`await client.user.findMany()` runs at build time**, but database queries usually need to run dynamically.
+- Next.js **cannot fetch database data at build time unless it remains static**.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## **🛠 Fixes**
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load Inter, a custom Google Font.
+### **1️⃣ Use `export const dynamic = "force-dynamic";`**
+This will **disable SSG** and make the page **always fetch fresh data on every request**.
+```tsx
+export const dynamic = "force-dynamic"; // ✅ Force Server-side Rendering (SSR)
 
-## Learn More
+import { client } from "@repo/db/client";
 
-To learn more about Next.js, take a look at the following resources:
+export default async function Home() {
+  const users = await client.user.findMany();
+  return (
+    <div>
+      {users?.map(user => (
+        <div key={user.id}>
+          username: {user.username}
+          password: {user.password}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+✅ **Now `npm run build` will work because the page is no longer statically generated.**  
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### **2️⃣ Use ISR (`revalidate = 30`) Instead**
+If you **want to cache the page** but still update it **every 30 seconds**, use **Incremental Static Regeneration (ISR)**:
+```tsx
+export const revalidate = 30; // ✅ Rebuild page every 30 seconds
 
-## Deploy on Vercel
+import { client } from "@repo/db/client";
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+export default async function Home() {
+  const users = await client.user.findMany();
+  return (
+    <div>
+      {users?.map(user => (
+        <div key={user.id}>
+          username: {user.username}
+          password: {user.password}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+✅ **Now the page is built statically but will update every 30 seconds.**  
+❌ However, if the database changes **more frequently**, this approach might not be the best.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+### **3️⃣ Convert to a Client Component (if API is available)**
+If you need **real-time updates**, you should fetch the data **on the client side** using `useEffect`:
+```tsx
+"use client";
+
+import { useEffect, useState } from "react";
+
+export default function Home() {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/users") // 👈 Create an API route for this
+      .then(res => res.json())
+      .then(data => setUsers(data));
+  }, []);
+
+  return (
+    <div>
+      {users?.map(user => (
+        <div key={user.id}>
+          username: {user.username}
+          password: {user.password}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+✅ **Now, the build won't break because the fetching happens in the browser instead of at build time.**  
+❌ Requires an API route (`/api/users`) to handle the database query.
+
+---
+
+## **🚀 Best Option for Your Case?**
+- If you need **real-time data** → Use **`export const dynamic = "force-dynamic";`** (**SSR**).
+- If data **updates occasionally** → Use **`export const revalidate = 30;`** (**ISR**).
+- If data is **user-specific or changes frequently** → Fetch **on the client side** using an API route.
+
+Let me know which one you prefer or if you need further clarification! 🚀🔥
