@@ -28,5 +28,5 @@ jobs:
         run: |
             echo "${{ secrets.SSH_PRIVATE_KEY }}" &> ~/ssh_key
             chmod 700 /home/runner/ssh_key
-            ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@52.66.126.159 -t "docker stop backend && docker run --name backend -d -p 8080:8080 niharlnx/backned:${{ github.sha }}"
+            ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@52.66.126.159 -t "docker stop backend_v2 && docker run --name backend -d -p 8080:8080 niharlnx/backned:${{ github.sha }}"
       
