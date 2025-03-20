@@ -16,6 +16,6 @@ export default async function Home() {
 }
 
 
-// export const revalidate = 30 // revalidate every 30 seconds
+export const revalidate = 30 // revalidate every 30 seconds
 // or
 // export const dynamic = 'force-dynamic'
