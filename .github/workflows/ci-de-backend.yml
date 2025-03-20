@@ -22,11 +22,14 @@ jobs:
           file: ./docker/Dockerfile.backend
           push: true
           tags: niharlnx/backned:${{ github.sha }}
-
     
       - name: Deploy to the VM
         run: |
-            echo "${{ secrets.SSH_PRIVATE_KEY }}" &> ~/ssh_key
-            chmod 700 /home/runner/ssh_key
-            ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@52.66.126.159 -t "docker stop backend && docker run --name backend -d -p 8080:8080 niharlnx/backned:${{ github.sha }}"
+            echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/ssh_key
+            chmod 600 ~/ssh_key
+            ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@52.66.126.159 -t "
+              docker stop backend || true && \
+              docker rm backend || true && \
+              docker run --name backend -d -p 8080:8080 niharlnx/backned:${{ github.sha }}"
+        
       
