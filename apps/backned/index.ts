@@ -9,7 +9,7 @@ app.get("/", async (req, res) => {
 
     try {
         const response = await client.user.findMany()
-        res.json({ response })
+        res.json({ response,whoops:"hello" },)
     } catch (error) {
         res.send(error)
     }
