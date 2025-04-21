@@ -7,36 +7,23 @@ services:
       dockerfile: docker/Dockerfile.backend
     ports:
       - 8080:8080
-    environment:
-      - DATABASE_URL=postgresql://postgres:me@postgres:5432
-    networks:
-      - testing
-    
+    env_file:
+      - ./packages/db/.env
   web:
     build:
       context: .
       dockerfile: docker/Dockerfile.web
       args:
-        DATABASE_URL: postgresql://postgres:me@postgres:5432
-      # we dont need this arg thing but i am still writing for learning purpose
+        DATABASE_URL: ${DATABASE_URL}
     ports:
       - 3000:3000
-    environment:
-      - DATABASE_URL=postgresql://postgres:me@postgres:5432
-    networks:
-      - testing
+    env_file:
+      - ./packages/db/.env
   ws:
     build:
       context: .
       dockerfile: docker/Dockerfile.ws
     ports:
       - 8081:8081
-    environment:
-      - DATABASE_URL=postgresql://postgres:me@postgres:5432
-    networks:
-      - testing
-
-networks:
-  testing:
-    external: true
-# here we are using an external network which we created at first, for avoiding the network problem with our database
+    env_file:
+      - ./packages/db/.env
