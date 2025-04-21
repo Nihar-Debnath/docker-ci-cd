@@ -67,10 +67,6 @@ cd .\packages\db\
 bunx prisma migrate dev
 cd ../../  
 
-cd .\apps\web\
-bun run build 
-cd ../../  
-
 git add .
 git commit -m "comment"
 git push origin main
