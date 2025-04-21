@@ -1,0 +1,37 @@
+name: Deploy the http backend server 
+on: 
+  push:
+    branches: [ main ]
+jobs: 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Docker login
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+      
+      - name: Build and push 
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile.backend
+          push: true
+          tags: niharlnx/backend:${{ github.sha }}
+    
+      - name: Deploy to the VM
+        run: |
+            echo "${{ secrets.SSH_PRIVATE_KEY_LAPTOP }}" > ~/ssh_key
+            chmod 600 ~/ssh_key
+            ssh -o StrictHostKeyChecking=no -i ~/ssh_key ubuntu@65.2.144.189 -t "
+              sudo docker stop backend || true
+              sudo docker rm backend || true
+              sudo docker run --name backend -d -p 8080:8080 \
+              -e DATABASE_URL=${{ secrets.NEONDB_URL }} \
+              niharlnx/backend:${{ github.sha }}
+              sleep 10
+              sudo docker ps"

@@ -1,0 +1,28 @@
+FROM oven/bun:1
+
+WORKDIR /user/src/app
+
+ARG DATABASE_URL
+ENV DATABASE_URL=${DATABASE_URL}
+# we dont need this arg thing but i am still writing for learning purpose
+
+
+
+COPY ./packages ./packages
+COPY ./apps/web ./apps/web
+COPY ./apps/web/.next ./apps/web/.next
+# i dont have option thats why i am doing this way (copied our first build up .next folder or static files), because of the network problems
+COPY ./bun.lock ./bun.lock
+COPY ./package.json ./package.json
+COPY ./turbo.json ./turbo.json
+
+RUN bun install
+RUN apt-get update -y && apt-get install -y openssl
+RUN bun run db:generate
+
+EXPOSE 3000
+
+CMD ["bun", "run", "start:web"]
+# For deployment we should need to use the start script instead of the dev script for production mode, read production.md for from explanation folder
+
+# if you didnt understood this dockerfile read the webDockerfile.md from explanation
